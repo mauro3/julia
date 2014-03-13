@@ -209,6 +209,7 @@ typedef struct _jl_datatype_t {
     jl_tuple_t *parameters;
     jl_tuple_t *names;
     jl_tuple_t *types;
+    jl_value_t *metadata;
     // to create a set of constructors for this sort of type
     jl_value_t *ctor_factory;
     jl_value_t *instance;  // for singletons

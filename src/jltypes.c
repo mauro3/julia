@@ -2576,6 +2576,7 @@ void jl_init_types(void)
     jl_datatype_type->struct_decl = NULL;
     jl_datatype_type->abstract = 0;
     jl_datatype_type->pointerfree = 0;
+    jl_datatype_type->metadata = NULL;
     // NOTE: types should not really be mutable, but the instance and
     // struct_decl fields are basically caches, which are mutated.
     jl_datatype_type->mutabl = 1;
@@ -2599,6 +2600,7 @@ void jl_init_types(void)
     jl_typename_type->abstract = 0;
     jl_typename_type->pointerfree = 0;
     jl_typename_type->mutabl = 1;
+    jl_typename_type->metadata = NULL;
 
     jl_sym_type->name = jl_new_typename(jl_symbol("Symbol"));
     jl_sym_type->name->primary = (jl_value_t*)jl_sym_type;
@@ -2617,6 +2619,7 @@ void jl_init_types(void)
     jl_sym_type->abstract = 0;
     jl_sym_type->pointerfree = 0;
     jl_sym_type->mutabl = 1;
+    jl_sym_type->metadata = NULL;
 
     // now they can be used to create the remaining base kinds and types
     jl_uniontype_type = jl_new_datatype(jl_symbol("UnionType"),

@@ -663,6 +663,7 @@ jl_datatype_t *jl_new_datatype(jl_sym_t *name, jl_datatype_t *super,
     t->struct_decl = NULL;
     t->size = 0;
     t->alignment = 0;
+    t->metadata = NULL;
     if (abstract || jl_tuple_len(parameters) > 0) {
         t->uid = 0;
     }
