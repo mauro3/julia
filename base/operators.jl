@@ -164,7 +164,7 @@ At_ldiv_Bt(a,b) = transpose(a)\transpose(b)
 
 widen{T<:Number}(x::T) = convert(widen(T), x)
 
-eltype(::Type) = Any
+eltype{T}(::Type{T}) = T
 eltype(::Type{Any}) = Any
 eltype(t::DataType) = eltype(super(t))
 eltype(x) = eltype(typeof(x))
