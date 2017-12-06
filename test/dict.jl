@@ -664,6 +664,18 @@ Dict(1 => rand(2,3), 'c' => "asdf") # just make sure this does not trigger a dep
     @test isa(wkd, WeakKeyDict)
 
     @test_throws ArgumentError WeakKeyDict([1, 2, 3])
+
+    # WeakKeyDict should not convert keys as they might be
+    # garbage-collected otherwise
+    wkd = WeakKeyDict{Vector{Int},Any}()
+    @test_throws MethodError wkd[[1.0]] = 1
+    wkd[[1]] = 1
+    @test wkd[[1]] == 1
+    @test_throws MethodError wkd[[1.0]]
+    wkd = WeakKeyDict{Vector{<:Integer},Any}()
+    wkd[[1]] = 1
+    @test wkd[[1]] == 1
+    @test_throws MethodError wkd[[1.0]]
 end
 
 @testset "issue #19995, hash of dicts" begin

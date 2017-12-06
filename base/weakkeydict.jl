@@ -7,7 +7,8 @@
 
 `WeakKeyDict()` constructs a hash table where the keys are weak
 references to objects, and thus may be garbage collected even when
-referenced in a hash table.
+referenced in a hash table.  Note that `WeakKeyDict`s do not convert
+keys, neither for read nor write access (unlike most other dicts).
 
 See [`Dict`](@ref) for further help.
 """
@@ -71,26 +72,24 @@ end
 empty(d::WeakKeyDict, ::Type{K}, ::Type{V}) where {K, V} = WeakKeyDict{K, V}()
 
 # conversion between Dict types
-function convert(::Type{WeakKeyDict{K,V}},d::Associative) where V where K
+function convert(::Type{WeakKeyDict{K,V}}, d::Associative) where V where K
     h = WeakKeyDict{K,V}()
     for (k,v) in d
-        ck = convert(K,k)
-        if !haskey(h,ck)
-            h[ck] = convert(V,v)
+        if !haskey(h,k)
+            h[k] = convert(V,v)
         else
             error("key collision during dictionary conversion")
         end
     end
     return h
 end
-convert(::Type{WeakKeyDict{K,V}},d::WeakKeyDict{K,V}) where {K,V} = d
+convert(::Type{WeakKeyDict{K,V}}, d::WeakKeyDict{K,V}) where {K,V} = d
 
 islocked(wkh::WeakKeyDict) = islocked(wkh.lock)
 lock(f, wkh::WeakKeyDict) = lock(f, wkh.lock)
 trylock(f, wkh::WeakKeyDict) = trylock(f, wkh.lock)
 
-function setindex!(wkh::WeakKeyDict{K}, v, key) where K
-    k = convert(K, key)
+function setindex!(wkh::WeakKeyDict{K}, v, k::K) where K
     finalizer(wkh.finalizer, k)
     lock(wkh) do
         wkh.ht[WeakRef(k)] = v
@@ -98,7 +97,7 @@ function setindex!(wkh::WeakKeyDict{K}, v, key) where K
     return wkh
 end
 
-function getkey(wkh::WeakKeyDict{K}, kk, default) where K
+function getkey(wkh::WeakKeyDict{K}, kk::K, default) where K
     return lock(wkh) do
         k = getkey(wkh.ht, kk, secret_table_token)
         k === secret_table_token && return default
@@ -106,16 +105,16 @@ function getkey(wkh::WeakKeyDict{K}, kk, default) where K
     end
 end
 
-get(wkh::WeakKeyDict{K}, key, default) where {K} = lock(() -> get(wkh.ht, key, default), wkh)
-get(default::Callable, wkh::WeakKeyDict{K}, key) where {K} = lock(() -> get(default, wkh.ht, key), wkh)
-get!(wkh::WeakKeyDict{K}, key, default) where {K} = lock(() -> get!(wkh.ht, key, default), wkh)
-get!(default::Callable, wkh::WeakKeyDict{K}, key) where {K} = lock(() -> get!(default, wkh.ht, key), wkh)
-pop!(wkh::WeakKeyDict{K}, key) where {K} = lock(() -> pop!(wkh.ht, key), wkh)
-pop!(wkh::WeakKeyDict{K}, key, default) where {K} = lock(() -> pop!(wkh.ht, key, default), wkh)
-delete!(wkh::WeakKeyDict, key) = lock(() -> delete!(wkh.ht, key), wkh)
+get(wkh::WeakKeyDict{K}, key::K, default) where {K} = lock(() -> get(wkh.ht, key, default), wkh)
+get(default::Callable, wkh::WeakKeyDict{K}, key::K) where {K} = lock(() -> get(default, wkh.ht, key), wkh)
+get!(wkh::WeakKeyDict{K}, key::K, default) where {K} = lock(() -> get!(wkh.ht, key, default), wkh)
+get!(default::Callable, wkh::WeakKeyDict{K}, key::K) where {K} = lock(() -> get!(default, wkh.ht, key), wkh)
+pop!(wkh::WeakKeyDict{K}, key::K) where {K} = lock(() -> pop!(wkh.ht, key), wkh)
+pop!(wkh::WeakKeyDict{K}, key::K, default) where {K} = lock(() -> pop!(wkh.ht, key, default), wkh)
+delete!(wkh::WeakKeyDict{K}, key::K) where {K} = lock(() -> delete!(wkh.ht, key), wkh)
 empty!(wkh::WeakKeyDict) = (lock(() -> empty!(wkh.ht), wkh); wkh)
-haskey(wkh::WeakKeyDict{K}, key) where {K} = lock(() -> haskey(wkh.ht, key), wkh)
-getindex(wkh::WeakKeyDict{K}, key) where {K} = lock(() -> getindex(wkh.ht, key), wkh)
+haskey(wkh::WeakKeyDict{K}, key::K) where {K} = lock(() -> haskey(wkh.ht, key), wkh)
+getindex(wkh::WeakKeyDict{K}, key::K) where {K} = lock(() -> getindex(wkh.ht, key), wkh)
 isempty(wkh::WeakKeyDict) = isempty(wkh.ht)
 length(t::WeakKeyDict) = length(t.ht)
 
